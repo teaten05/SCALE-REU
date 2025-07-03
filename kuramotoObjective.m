@@ -4,6 +4,8 @@ function objective = kuramotoObjective(K, dt, N)
     % Optional: additional bad weather results (with necessarily 
     %                                           synchronized drone
     %                                           frequencies)
+    % Create a fixed topology with the value 'ring' or 'all2all'
+    topology = 'ring';
     
     % Random natural frequencies (use consistent seed for reproducibility)
     rng(42); % Optional: for reproducible results
@@ -18,11 +20,18 @@ function objective = kuramotoObjective(K, dt, N)
     
     % Storage for synchronization parameter
     R_values = zeros(length(time), 1);
+
+    % Build adjacency matrix for ring
+    A = zeros(N, N);
+    for i = 1:N
+        A(i, mod(i, N) + 1) = 1;
+        A(i, mod(i - 2, N) + 1) = 1;
+    end
     
     % Main simulation loop (no plotting during optimization)
     for i = 1:length(time)
         % Update phase angles using Kuramoto model
-        theta_dot = omega + (K/N) .* sum(sin(theta - theta'), 2);
+        theta_dot = omega + (K / N) .* sum(A .* sin(theta - theta'), 2);
         theta = theta + theta_dot .* dt;
         
         % Calculate the synchronization order parameter
